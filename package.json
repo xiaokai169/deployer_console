@@ -1,0 +1,41 @@
+{
+  "name": "deploye",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deploye - 项目发布控制台",
+  "main": "./out/main/index.js",
+  "author": "deploye",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaokai169/deployer_console.git"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "npm run typecheck && electron-vite build",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "dist": "electron-vite build && electron-builder",
+    "dist:win": "electron-vite build && electron-builder --win nsis",
+    "release:win": "electron-vite build && electron-builder --win nsis --publish always"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "electron-updater": "^6.8.11",
+    "pinia": "^4.1.0",
+    "ssh2": "^1.17.0",
+    "vue": "^3.5.45"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.4",
+    "@types/node": "^26.6.6",
+    "@types/ssh2": "^1.15.6",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vue-tsc": "^3.3.14"
+  }
+}

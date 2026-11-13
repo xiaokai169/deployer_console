@@ -1,0 +1,29 @@
+appId: com.deploye.console
+productName: Deploye
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - package.json
+npmRebuild: false
+# 自动更新源：npm run release:win 会把安装包与 latest.yml 上传到该仓库的 Release
+publish:
+  provider: github
+  owner: xiaokai169
+  repo: deployer_console
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+mac:
+  target: [dmg]
+  category: public.app-category.developer-tools
+linux:
+  target: [AppImage]
+  category: Development

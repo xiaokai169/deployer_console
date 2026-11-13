@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>发布控制台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1115;color:#d7dce5;font-family:-apple-system,"Microsoft YaHei",sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.mono{font-family:Consolas,monospace}
+.topbar{height:46px;background:#171a21;border-bottom:1px solid #2a2f3a;display:flex;align-items:center;padding:0 16px;gap:16px;flex-shrink:0}
+.logo{font-weight:600;font-size:14px}.logo span{color:#3fb950}
+.spacer{flex:1}
+.meta{color:#7d8595;font-size:12px}.meta b{color:#d7dce5}
+.main{flex:1;display:grid;grid-template-columns:210px 1fr 300px;min-height:0}
+.col{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.col+.col{border-left:1px solid #2a2f3a}
+.col-head{height:38px;display:flex;align-items:center;padding:0 14px;font-size:11px;letter-spacing:1px;color:#7d8595;text-transform:uppercase;border-bottom:1px solid #2a2f3a;flex-shrink:0}
+.col-body{flex:1;overflow-y:auto}
+.proj{padding:9px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin:6px}
+.proj:hover{background:#1d2129}.proj.active{background:#1d2129;border-color:#1f6f34}
+.proj-name{display:flex;align-items:center;gap:7px;font-weight:500;margin-bottom:4px}
+.dot{width:6px;height:6px;border-radius:50%}.dot.vue{background:#3fb950}.dot.php{background:#a371f7}
+.proj-sub{font-size:11px;color:#7d8595;display:flex;justify-content:space-between}
+.tag{font-size:10px;padding:1px 6px;border-radius:3px;background:#262b35;color:#7d8595}
+.add-proj{margin:6px;padding:9px;text-align:center;border:1px dashed #2a2f3a;border-radius:6px;color:#7d8595;cursor:pointer;font-size:12px}
+.tabs{display:flex;flex-direction:column;padding:10px;gap:2px;border-top:1px solid #2a2f3a;margin-top:6px}
+.tab{padding:9px 12px;border-radius:6px;cursor:pointer;font-size:12.5px;color:#7d8595;display:flex;align-items:center;gap:9px;border:1px solid transparent}
+.tab:hover{background:#1d2129;color:#d7dce5}
+.tab.active{background:#1d2129;color:#d7dce5;border-color:#1f6f34}
+.tab .tnum{font-size:10px;color:#4a5160;width:16px}.tab.active .tnum{color:#3fb950}
+.tab .tsub{font-size:10px;color:#7d8595;margin-left:auto}
+.panel-scroll{flex:1;overflow-y:auto;padding:18px 22px 30px}
+.group{margin-bottom:24px}
+.group-title{font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.group-desc{font-size:11px;color:#7d8595;margin-bottom:14px}
+.badge{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:400}
+.badge.proj{background:#12351d;color:#3fb950}.badge.tgt{background:#1a2a3f;color:#4a9eff}
+.field-row{display:flex;gap:14px;margin-bottom:14px}
+.field{flex:1;min-width:0}
+.field label{display:block;font-size:11px;color:#7d8595;margin-bottom:5px}
+select,input[type=text],input[type=number],input[type=password],textarea{width:100%;background:#1d2129;border:1px solid #2a2f3a;color:#d7dce5;padding:8px 10px;border-radius:5px;font-size:12px;outline:none;font-family:inherit}
+input.mono,textarea.mono{font-family:Consolas,monospace;font-size:11.5px}
+input.readonly{background:#14171d;color:#7d8595}
+.btn{padding:8px 14px;border-radius:5px;border:1px solid #2a2f3a;background:#1d2129;color:#d7dce5;cursor:pointer;font-size:12px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:#3a4150;background:#222732}
+.btn.primary{background:#1f6f34;border-color:#3fb950;color:#fff}
+.btn.warn{border-color:#6b4a12;color:#d29922}
+.btn.sm{padding:6px 11px;font-size:11.5px}
+.switch-row{display:flex;align-items:center;gap:12px;background:#1d2129;border:1px solid #2a2f3a;border-radius:6px;padding:12px 14px;margin-bottom:14px}
+.switch-row .sw-text{flex:1}
+.switch-row .sw-text b{display:block;font-weight:500;font-size:12.5px;margin-bottom:2px}
+.switch-row .sw-text span{font-size:11px;color:#7d8595}
+.switch{position:relative;width:42px;height:23px;flex-shrink:0;background:#333a47;border-radius:12px;cursor:pointer;transition:.2s}
+.switch.on{background:#1f6f34}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on::after{left:22px}
+.target-card{background:#1d2129;border:1px solid #2a2f3a;border-radius:6px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.target-card.active{border-color:#1f6f34;background:#16211a}
+.target-card .tc-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.target-card .tc-name{font-weight:500;flex:1}
+.target-card .tc-host{font-size:11px;color:#7d8595}
+.status-dot{width:7px;height:7px;border-radius:50%}
+.status-dot.ok{background:#3fb950}.status-dot.unk{background:#7d8595}
+.protect-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.protect-row input[type=text]{flex:1}
+.protect-row select{width:110px;flex-shrink:0}
+.protect-row .del{width:28px;height:28px;flex-shrink:0;border-radius:4px;border:1px solid #2a2f3a;background:transparent;color:#7d8595;cursor:pointer;font-size:15px}
+.add-line{padding:7px;text-align:center;border:1px dashed #2a2f3a;border-radius:5px;color:#7d8595;cursor:pointer;font-size:11.5px;margin-top:4px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat{background:#1d2129;border:1px solid #2a2f3a;border-radius:5px;padding:9px 8px;text-align:center}
+.stat .n{font-size:18px;font-weight:600}.stat .l{font-size:10px;color:#7d8595;margin-top:2px}
+.n.add{color:#3fb950}.n.mod{color:#d29922}.n.del{color:#f85149}
+.file-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;font-size:11.5px}
+.file-item .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d7dce5}
+.badge-st{font-size:9.5px;padding:1px 5px;border-radius:3px}
+.badge-st.a{background:#12351d;color:#3fb950}.badge-st.m{background:#33290f;color:#d29922}.badge-st.d{background:#3a1717;color:#f85149}
+.release-item{display:flex;align-items:center;gap:8px;padding:8px;border-radius:5px;border:1px solid transparent;margin-bottom:5px;font-size:11.5px}
+.release-item.current{border-color:#1f6f34;background:#16211a}
+.release-item .ver{flex:1;min-width:0}
+.release-item .ver b{display:block;font-weight:500;color:#d7dce5;font-size:12px}
+.release-item .ver span{color:#7d8595;font-size:10.5px}
+.cur-tag{font-size:9.5px;background:#1f6f34;color:#fff;padding:1px 6px;border-radius:3px}
+.lock-tag{font-size:9.5px;background:#3a1717;color:#f85149;padding:1px 6px;border-radius:3px}
+.rb-btn{font-size:10.5px;padding:3px 9px;border-radius:4px;border:1px solid #2a2f3a;background:transparent;color:#7d8595;cursor:pointer;font-family:inherit}
+.progress-wrap{padding:14px 22px 0}
+.progress-bar{height:4px;background:#1d2129;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:#3fb950;width:0%;transition:width .3s}
+.progress-text{font-size:11px;color:#7d8595;margin-top:6px;display:flex;justify-content:space-between}
+.hidden{display:none!important}
+.logbar{height:190px;background:#0b0d11;border-top:1px solid #2a2f3a;display:flex;flex-direction:column;flex-shrink:0}
+.log-head{height:34px;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:1px solid #2a2f3a;font-size:11px;color:#7d8595;flex-shrink:0}
+.log-head .title{color:#d7dce5;font-weight:500;font-size:12px}
+.log-filter{display:flex;gap:2px;background:#1d2129;border-radius:5px;padding:2px}
+.log-filter span{padding:3px 9px;border-radius:3px;cursor:pointer;font-size:10.5px}
+.log-filter span.on{background:#232833;color:#d7dce5}
+.log-head .tool{cursor:pointer;padding:3px 7px;border-radius:4px}
+.log-body{flex:1;overflow-y:auto;padding:6px 0;font-family:Consolas,monospace;font-size:11.5px;line-height:1.7}
+.log-line{display:flex;gap:8px;padding:1px 14px}
+.log-time{color:#4a5160}.log-lv{width:46px;font-weight:600}
+.log-lv.INFO{color:#4a9eff}.log-lv.OK{color:#3fb950}.log-lv.WARN{color:#d29922}.log-lv.ERROR{color:#f85149}.log-lv.CMD{color:#a371f7}
+.log-msg{flex:1;white-space:pre-wrap;word-break:break-all;color:#a8b0bf}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{width:640px;max-height:84vh;background:#171a21;border:1px solid #2a2f3a;border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{padding:16px 20px;border-bottom:1px solid #2a2f3a;font-size:15px;font-weight:600;display:flex;align-items:center}
+.modal-head .x{margin-left:auto;cursor:pointer;color:#7d8595;font-size:18px}
+.modal-body{padding:16px 20px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 20px;border-top:1px solid #2a2f3a;display:flex;gap:10px;justify-content:flex-end}
+.cf-row{display:flex;align-items:center;gap:10px;padding:8px 11px;background:#1d2129;border:1px solid #2a2f3a;border-radius:5px;margin-bottom:6px;font-size:12px}
+.cf-row .k{color:#7d8595;width:96px;flex-shrink:0}.cf-row .v{flex:1}
+.right-tabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid #2a2f3a}
+.rtab{padding:7px 12px;font-size:11.5px;color:#7d8595;cursor:pointer;border-bottom:2px solid transparent}
+.rtab.on{color:#d7dce5;border-bottom-color:#3fb950}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Deploy<span>Console</span></div>
+  <div class="spacer"></div>
+  <div class="meta">状态：<b>空闲</b></div>
+  <div class="meta">操作员：<b>张三</b></div>
+</div>
+
+<div class="main">
+  <!-- 左栏 -->
+  <div class="col">
+    <div class="col-head">项目</div>
+    <div class="col-body">
+      <div class="proj active">
+        <div class="proj-name"><span class="dot vue"></span>官网前端</div>
+        <div class="proj-sub"><span class="tag">VUE</span><span>2 目标</span></div>
+      </div>
+      <div class="proj">
+        <div class="proj-name"><span class="dot php"></span>PHP接口站</div>
+        <div class="proj-sub"><span class="tag">PHP</span><span>1 目标</span></div>
+      </div>
+      <div class="add-proj">+ 新建项目</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="basic"><span class="tnum">1</span>基本信息</div>
+        <div class="tab" data-tab="build"><span class="tnum">2</span>构建与打包</div>
+        <div class="tab" data-tab="strategy"><span class="tnum">3</span>发布策略</div>
+        <div class="tab" data-tab="targets"><span class="tnum">4</span>目标服务器<span class="tsub">(2)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中栏 -->
+  <div class="col">
+    <div class="col-head"><span id="panelTitle">基本信息</span><span class="spacer"></span><span style="color:#3fb950;text-transform:none">prod-01 主站</span></div>
+    <div style="display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid #2a2f3a;align-items:center;">
+      <button class="btn sm">预检</button>
+      <button class="btn sm">仅构建</button>
+      <button class="btn sm warn">回滚</button>
+      <span class="spacer"></span>
+      <button class="btn primary">发布</button>
+    </div>
+    <div class="progress-wrap hidden">
+      <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+      <div class="progress-text"><span>上传中...</span><span>45%</span></div>
+    </div>
+
+    <div class="col-body"><div class="panel-scroll">
+
+      <!-- ===== Tab1 基本信息 ===== -->
+      <div class="pane" data-pane="basic">
+        <div class="group">
+          <div class="group-title">基本信息 <span class="badge proj">项目级</span></div>
+          <div class="group-desc">项目的名称、类型与本地代码位置。</div>
+          <div class="field-row">
+            <div class="field"><label>项目名称</label><input type="text" value="官网前端"></div>
+            <div class="field" style="max-width:200px;"><label>项目类型</label>
+              <select><option>Vue 前端</option><option>PHP 应用</option><option>静态 HTML</option></select></div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group-title">本地路径</div>
+          <div class="group-desc">通过系统文件选择器选取本地项目目录。</div>
+          <div class="field-row"><div class="field"><label>本地项目目录</label>
+            <input type="text" class="mono readonly" value="/Users/dev/code/web-official" readonly></div></div>
+          <button class="btn primary">选择目录</button>
+        </div>
+        <div class="group">
+          <div class="group-title">产物校验</div>
+          <div class="group-desc">发布前自动校验产物完整性，不达标则中止发布。</div>
+          <div class="switch-row">
+            <div class="sw-text"><b>启用产物校验</b><span>检查空目录、缺入口文件、体积异常</span></div>
+            <div class="switch on"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>入口文件（必须存在）</label><input type="text" class="mono" value="index.html"></div>
+            <div class="field" style="max-width:150px;"><label>体积下限 (MB)</label><input type="number" value="1"></div>
+            <div class="field" style="max-width:150px;"><label>体积上限 (MB)</label><input type="number" value="200"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab2 构建与打包 ===== -->
+      <div class="pane hidden" data-pane="build">
+        <div class="group">
+          <div class="group-title">构建命令 <span class="badge proj">项目级</span></div>
+          <div class="group-desc">在本地项目目录执行，留空表示跳过构建。</div>
+          <div class="field-row"><div class="field"><label>构建命令</label>
+            <input type="text" class="mono" value="npm run build:prod" placeholder="npm run build"></div></div>
+        </div>
+        <div class="group">
+          <div class="group-title">打包与传输</div>
+          <div class="switch-row">
+            <div class="sw-text"><b>打包压缩</b><span>将产物打包为单个压缩包后传输</span></div>
+            <div class="switch on"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>压缩包命名规则</label><input type="text" class="mono" value="web-official-{timestamp}.tar.gz"></div>
+            <div class="field" style="max-width:150px;"><label>有效期 (小时)</label><input type="number" value="12"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>传输方式</label>
+              <select><option>SFTP 上传</option><option>rsync 同步</option></select></div>
+            <div class="field"><label>未压缩时临时目录</label><input type="text" class="mono" value="tmp/deploy-staging"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab3 发布策略 ===== -->
+      <div class="pane hidden" data-pane="strategy">
+        <div class="group">
+          <div class="group-title">发布策略 <span class="badge proj">项目级</span></div>
+          <div class="group-desc">控制多目标发布时的失败处理、并发与超时。</div>
+          <div class="field-row">
+            <div class="field"><label>失败策略</label>
+              <select><option>任一失败即停止</option><option>失败继续其他目标</option><option>失败自动回滚</option></select></div>
+            <div class="field" style="max-width:150px;"><label>并发数</label><input type="number" value="2"></div>
+            <div class="field" style="max-width:150px;"><label>超时 (秒)</label><input type="number" value="300"></div>
+            <div class="field" style="max-width:150px;"><label>重试次数</label><input type="number" value="1"></div>
+          </div>
+          <div class="field-row"><div class="field" style="max-width:220px;"><label>发布人</label>
+            <input type="text" value="张三"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== Tab4 目标服务器 ===== -->
+      <div class="pane hidden" data-pane="targets">
+        <div class="group">
+          <div class="group-title">连接信息 <span class="badge tgt">目标级</span></div>
+          <div class="group-desc">当前编辑：prod-01 主站</div>
+          <div class="field-row">
+            <div class="field"><label>名称</label><input type="text" value="prod-01 主站"></div>
+            <div class="field" style="max-width:150px;"><label>主机</label><input type="text" class="mono" value="1.2.3.4"></div>
+            <div class="field" style="max-width:100px;"><label>端口</label><input type="text" class="mono" value="22"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>用户名</label><input type="text" class="mono" value="deploy"></div>
+            <div class="field"><label>认证方式</label>
+              <select><option>密钥文件</option><option>密码</option></select></div>
+          </div>
+          <div class="field-row"><div class="field"><label>密钥路径 / 密码</label>
+            <input type="text" class="mono" value="~/.ssh/deploy_rsa"></div></div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">目录结构</div>
+          <div class="group-desc">服务器上的部署目录约定。</div>
+          <div class="field-row">
+            <div class="field"><label>根目录</label><input type="text" class="mono" value="/var/www/web-official"></div>
+            <div class="field"><label>上传目录</label><input type="text" class="mono" value="uploads"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>releases 目录</label><input type="text" class="mono" value="releases"></div>
+            <div class="field"><label>backup 目录</label><input type="text" class="mono" value="backup"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>current 软链名</label><input type="text" class="mono" value="current"></div>
+            <div class="field" style="max-width:150px;"><label>保留版本数</label><input type="number" value="5"></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">保护路径</div>
+          <div class="group-desc">发布时不被覆盖的路径，可跳过或软链共享。</div>
+          <div class="protect-row">
+            <input type="text" class="mono" value="shared/.env">
+            <select><option>跳过</option><option>软链共享</option></select>
+            <button class="del">×</button>
+          </div>
+          <div class="protect-row">
+            <input type="text" class="mono" value="shared/storage">
+            <select><option>跳过</option><option selected>软链共享</option></select>
+            <button class="del">×</button>
+          </div>
+          <div class="protect-row">
+            <input type="text" class="mono" value="shared/uploads">
+            <select><option>跳过</option><option selected>软链共享</option></select>
+            <button class="del">×</button>
+          </div>
+          <div class="add-line">+ 添加保护路径</div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">钩子命令</div>
+          <div class="group-desc">在发布各阶段于服务器执行。</div>
+          <div class="field-row"><div class="field"><label>发布前</label>
+            <textarea class="mono" rows="2">systemctl stop web-official</textarea></div></div>
+          <div class="field-row"><div class="field"><label>发布后</label>
+            <textarea class="mono" rows="2">systemctl start web-official</textarea></div></div>
+          <div class="field-row"><div class="field"><label>回滚后</label>
+            <textarea class="mono" rows="2">systemctl restart web-official</textarea></div></div>
+        </div>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 右栏 -->
+  <div class="col">
+    <div class="col-head">目标服务器</div>
+    <div class="col-body" style="padding:10px;">
+      <div class="target-card active">
+        <div class="tc-head"><span class="status-dot ok"></span><span class="tc-name">prod-01 主站</span></div>
+        <div class="tc-host mono">deploy@1.2.3.4:22</div>
+        <div class="tc-host mono">/var/www/web-official</div>
+      </div>
+      <div class="target-card">
+        <div class="tc-head"><span class="status-dot unk"></span><span class="tc-name">阿里云备用</span></div>
+        <div class="tc-host mono">root@5.6.7.8:22</div>
+        <div class="tc-host mono">/data/www/web-official</div>
+      </div>
+      <div class="add-line">+ 添加目标服务器</div>
+
+      <div class="right-tabs">
+        <div class="rtab on" data-rtab="change">本次变更</div>
+        <div class="rtab" data-rtab="history">发布历史</div>
+      </div>
+
+      <div class="rpane" data-rpane="change">
+        <div class="stat-grid" style="margin-top:12px;">
+          <div class="stat"><div class="n add">6</div><div class="l">新增</div></div>
+          <div class="stat"><div class="n mod">4</div><div class="l">更新</div></div>
+          <div class="stat"><div class="n del">0</div><div class="l">删除</div></div>
+        </div>
+        <div class="file-item"><span class="fn mono">index.html</span><span class="badge-st a">新增</span></div>
+        <div class="file-item"><span class="fn mono">assets/index-8f2a.js</span><span class="badge-st a">新增</span></div>
+        <div class="file-item"><span class="fn mono">assets/vendor-3c1d.js</span><span class="badge-st m">更新</span></div>
+        <div class="file-item"><span class="fn mono">assets/style-9b7e.css</span><span class="badge-st m">更新</span></div>
+        <div class="file-item"><span class="fn mono">assets/logo.svg</span><span class="badge-st a">新增</span></div>
+        <div class="file-item"><span class="fn mono">assets/hero.webp</span><span class="badge-st a">新增</span></div>
+        <div class="file-item"><span class="fn mono">assets/chunk-1.js</span><span class="badge-st m">更新</span></div>
+        <div class="file-item"><span class="fn mono">assets/chunk-2.js</span><span class="badge-st m">更新</span></div>
+        <div class="file-item"><span class="fn mono">robots.txt</span><span class="badge-st a">新增</span></div>
+        <div class="file-item"><span class="fn mono">manifest.json</span><span class="badge-st a">新增</span></div>
+      </div>
+
+      <div class="rpane hidden" data-rpane="history">
+        <div style="padding-top:12px;">
+          <div class="release-item current">
+            <div class="ver"><b class="mono">20261112-0920</b><span>2026-11-12 09:20 · 张三</span></div>
+            <span class="cur-tag">当前</span>
+          </div>
+          <div class="release-item">
+            <div class="ver"><b class="mono">20261111-1830</b><span>2026-11-11 18:30 · 李四</span></div>
+            <button class="rb-btn">回滚</button>
+          </div>
+          <div class="release-item">
+            <div class="ver"><b class="mono">20261110-1420</b><span>2026-11-10 14:20 · 张三</span></div>
+            <span class="lock-tag">不可回滚</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 日志 -->
+<div class="logbar">
+  <div class="log-head">
+    <span class="title">发布日志</span>
+    <div class="log-filter">
+      <span class="on">全部</span><span>信息</span><span>警告</span><span>错误</span><span>命令</span>
+    </div>
+    <span class="spacer"></span>
+    <span class="tool">导出</span>
+    <span class="tool">清空</span>
+  </div>
+  <div class="log-body">
+    <div class="log-line"><span class="log-time">09:20:01</span><span class="log-lv INFO">INFO</span><span class="log-msg">开始发布 官网前端 → prod-01 主站</span></div>
+    <div class="log-line"><span class="log-time">09:20:02</span><span class="log-lv CMD">CMD</span><span class="log-msg">npm run build:prod</span></div>
+    <div class="log-line"><span class="log-time">09:20:38</span><span class="log-lv OK">OK</span><span class="log-msg">构建完成，产物 42.6 MB</span></div>
+    <div class="log-line"><span class="log-time">09:20:39</span><span class="log-lv INFO">INFO</span><span class="log-msg">校验通过：入口文件存在，体积在范围内</span></div>
+    <div class="log-line"><span class="log-time">09:20:40</span><span class="log-lv CMD">CMD</span><span class="log-msg">sftp put web-official-202611120920.tar.gz → uploads/</span></div>
+    <div class="log-line"><span class="log-time">09:20:55</span><span class="log-lv WARN">WARN</span><span class="log-msg">保护路径 shared/.env 已跳过</span></div>
+    <div class="log-line"><span class="log-time">09:21:02</span><span class="log-lv OK">OK</span><span class="log-msg">发布完成，current → releases/20261112-0920</span></div>
+  </div>
+</div>
+
+<script>
+// 中间 Tab 切换
+var tabs = document.querySelectorAll('.tab');
+for (var i = 0; i < tabs.length; i++) {
+  tabs[i].onclick = function () {
+    var name = this.getAttribute('data-tab');
+    for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+    this.classList.add('active');
+    var panes = document.querySelectorAll('.pane');
+    for (var k = 0; k < panes.length; k++) {
+      if (panes[k].getAttribute('data-pane') === name) panes[k].classList.remove('hidden');
+      else panes[k].classList.add('hidden');
+    }
+    var titles = {basic:'基本信息',build:'构建与打包',strategy:'发布策略',targets:'目标服务器'};
+    document.getElementById('panelTitle').textContent = titles[name];
+  };
+}
+
+// 右侧 Tab 切换
+var rtabs = document.querySelectorAll('.rtab');
+for (var m = 0; m < rtabs.length; m++) {
+  rtabs[m].onclick = function () {
+    var name = this.getAttribute('data-rtab');
+    for (var n = 0; n < rtabs.length; n++) rtabs[n].classList.remove('on');
+    this.classList.add('on');
+    var rpanes = document.querySelectorAll('.rpane');
+    for (var p = 0; p < rpanes.length; p++) {
+      if (rpanes[p].getAttribute('data-rpane') === name) rpanes[p].classList.remove('hidden');
+      else rpanes[p].classList.add('hidden');
+    }
+  };
+}
+
+// 开关点击
+var sws = document.querySelectorAll('.switch');
+for (var q = 0; q < sws.length; q++) {
+  sws[q].onclick = function () { this.classList.toggle('on'); };
+}
+</script>
+</body>
+</html>
