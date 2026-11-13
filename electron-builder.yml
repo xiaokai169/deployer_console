@@ -12,6 +12,8 @@ publish:
   provider: github
   owner: xiaokai169
   repo: deployer_console
+  # 必须是正式 Release 才能被 electron-updater 识别（draft / prerelease 不生效）
+  releaseType: release
 win:
   target:
     - target: nsis
